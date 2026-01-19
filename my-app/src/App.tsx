@@ -15,7 +15,7 @@ function App() {
                 price: 26.60
             },
             {
-                id: 1,
+                id: 2,
                 title: "Android Studio",
                 description: "Shape the future of apps: Join the Android community & download the SDK today. Smarter...",
                 imageUrl: "src/assets/android.png",
@@ -31,10 +31,18 @@ function App() {
             {
                 id: 4,
                 title: "BackEnd",
-                description: "Telas responsivas.",
+                description: "Telas Backend.",
                 imageUrl: "src/assets/backend.jpg",
                 price: 45.00
+            },
+            {
+                id: 5,
+                title: "Ionic",
+                description: "Telas celulares movéis.",
+                imageUrl: "src/assets/ionic.png",
+                price: 700.00
             }
+
     ]);
 
     const [searchTerm, setSearchTerm] = useState<string>('');
