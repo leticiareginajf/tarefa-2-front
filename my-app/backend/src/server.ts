@@ -12,7 +12,7 @@ app.use(cors({origin: 'http://localhost:5173'}));
 
 const PORT = 3001;
 
-export interface ProductData{
+/*export interface ProductData{
     id: number;
     title: string;
     description: string;
@@ -20,7 +20,7 @@ export interface ProductData{
     imageUrl: string;
     isFeatured?: boolean;
 }
-
+*/
 
 const mockProducts = [
     {
