@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient, Prisma } from '@prisma/client';
 import {z, ZodError} from 'zod'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 const app = express();
 
@@ -10,9 +12,126 @@ const prisma = new PrismaClient();
 app.use(cors({origin: 'http://localhost:5173'}));
 app.use(express.json());
 
+
+const registerSchema = z.object({
+    email: z.email('Email inválido'),
+    password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+    name: z.string().optional()
+})
+
+const loginSchema = z.object({
+    email: z.email('Email inválido'),
+    password: z.string().min(1, 'Senha é obrigatória')
+})
+
+
+const JWT_SECRET = 'seu_jwt_secret_super_seguro_aqui'
+
+
 app.get('/', (_req: Request, res: Response) => {
     res.json({ok: true, msg: 'API de Produtos no ar!'});
 });
+
+
+app.post('/api/auth/register', async (req: Request, res: Response) => {
+    try {
+        // 1. Validar dados de entrada
+        const { email, password, name } = registerSchema.parse(req.body)
+
+        // 2. Verificar se usuário já existe
+        const existingUser = await prisma.user.findUnique({
+            where: { email }
+        })
+
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email já está em uso' })
+        }
+
+        // 3. Criar hash da senha (10 rounds é um bom padrão de segurança)
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        // 4. Criar usuário no banco
+        const user = await prisma.user.create({
+            data: {
+                email,
+                password: hashedPassword,
+                name
+            }
+        })
+
+        // 5. Gerar token JWT
+        const token = jwt.sign(
+            { userId: user.id }, // Payload: informações que queremos no token
+            JWT_SECRET,
+            { expiresIn: '7d' } // Token expira em 7 dias
+        )
+
+        // 6. Retornar sucesso (sem a senha!)
+        return res.status(201).json({
+            message: 'Usuário criado com sucesso',
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name
+            }
+        })
+
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ error: error.errors[0].message })
+        }
+        return res.status(500).json({ error: 'Erro interno do servidor' })
+    }
+})
+
+
+app.post('/api/auth/login', async (req: Request, res: Response) => {
+    try {
+        // 1. Validar dados de entrada
+        const { email, password } = loginSchema.parse(req.body)
+
+        // 2. Buscar usuário no banco
+        const user = await prisma.user.findUnique({
+            where: { email }
+        })
+
+        if (!user) {
+            return res.status(401).json({ error: 'Email ou senha incorretos' })
+        }
+
+        // 3. Comparar senha fornecida com hash salvo
+        const isPasswordValid = await bcrypt.compare(password, user.password)
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: 'Email ou senha incorretos' })
+        }
+
+        // 4. Gerar token JWT
+        const token = jwt.sign(
+            { userId: user.id },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        )
+
+        // 5. Retornar sucesso
+        return res.status(200).json({
+            message: 'Login realizado com sucesso',
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name
+            }
+        })
+
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ error: error.errors[0].message })
+        }
+        return res.status(500).json({ error: 'Erro interno do servidor' })
+    }
+})
 
 /*export interface ProductData{
     id: number;

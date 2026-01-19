@@ -17,4 +17,14 @@
 ## Atividade: CRUD com Express, Prisma e Zod
 
 # Implementei o PUT, POST, prisma studio, npx prisma db seed...
-# Subida em Insonomia - GET, POST, PUT, . 
+# Subida em Insonomia - GET, POST, PUT, DELETE.
+
+
+# Tarefa 3
+
+## Aluna: Leticia Regina Honorio Franciso
+## Professor: Lucas Grassano Lattari 
+
+## Atividade: Autenticação e Middleware no Express
+
+# Implementei o Autenticação
